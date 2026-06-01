@@ -100,19 +100,22 @@ def ingest_default_series() -> IngestResponse:
 
 
 def is_ingest_ready() -> bool:
-    bm25_corpus = load_corpus()
-    if not bm25_corpus:
-        return False
+    try:
+        bm25_corpus = load_corpus()
+        if not bm25_corpus:
+            return False
 
-    has_bcb_chunks = any("[agent:bcb]" in chunk for chunk in bm25_corpus)
-    if not has_bcb_chunks:
-        return False
+        has_bcb_chunks = any("[agent:bcb]" in chunk for chunk in bm25_corpus)
+        if not has_bcb_chunks:
+            return False
 
-    client = get_client()
-    collections = client.get_collections().collections
-    has_collection = any(c.name == settings.collection_name for c in collections)
+        client = get_client()
+        collections = client.get_collections().collections
+        has_collection = any(c.name == settings.collection_name for c in collections)
 
-    if not has_collection:
+        if not has_collection:
+            return False
+    except Exception:
         return False
 
     return True
@@ -236,6 +239,16 @@ def ask(payload: AskRequest) -> AskResponse:
     start_total = time.perf_counter()
 
     try:
+        if not is_ingest_ready():
+            return AskResponse(
+                answer="Knowledge base is still being ingested. Try again in a few minutes."
+                    if payload.lang == "en"
+                    else "A base de conhecimento ainda esta sendo ingerida. Tente novamente em alguns minutos.",
+                context=[],
+                agent="bcb",
+                lang=payload.lang
+            )
+
         docs, selected_agent = retrieve_documents_with_router(payload.question)
 
         if not docs:
