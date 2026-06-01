@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     rerank_top_k: int = 3
 
     # Comma-separated SGS series IDs
-    bcb_series: str = "432,433,1,12,10813,1208,4380"
+    bcb_series: str = "432,433,1,12,10813"
     b3_symbols: str = "PETR4.SA,VALE3.SA,ITUB4.SA,BBDC4.SA,ABEV3.SA"
     max_rows_per_series: int = 120
     daily_window_days: int = 180

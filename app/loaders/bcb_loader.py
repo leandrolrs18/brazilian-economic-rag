@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+import logging
 from time import sleep
 from typing import Iterable
 
 import requests
 
 from app.config.settings import settings
+
+logger = logging.getLogger(__name__)
+
 SGS_BASE_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{series_id}/dados?formato=json"
 SGS_CSV_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{series_id}/dados?formato=csv"
 
@@ -161,7 +165,12 @@ def _fetch_series(series_id: str) -> SeriesData:
 def fetch_series(series_ids: Iterable[str]) -> list[SeriesData]:
     series_list = []
     for series_id in series_ids:
-        series_list.append(_fetch_series(series_id))
+        try:
+            series_list.append(_fetch_series(series_id))
+        except requests.HTTPError as exc:
+            logger.warning("Ignorando serie SGS %s por erro HTTP: %s", series_id, exc)
+        except requests.RequestException as exc:
+            logger.warning("Ignorando serie SGS %s por erro de rede: %s", series_id, exc)
     return series_list
 
 
