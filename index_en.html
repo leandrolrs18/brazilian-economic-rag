@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Economic Analyst RAG</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --text: #1e293b;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+
+    .main-card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border);
+    }
+
+    .assets-tag {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tag {
+      background: #eff6ff;
+      color: var(--primary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid #dbeafe;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .status-bar {
+      margin-top: 24px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none; 
+    }
+
+    .status-loading { background: #fef9c3; color: #854d0e; display: block; }
+    .status-error { background: #fee2e2; color: #991b1b; display: block; }
+    .status-success { background: #dcfce7; color: #166534; display: block; }
+
+    #answer-container {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 2px solid var(--border);
+    }
+
+    .markdown-body {
+      font-size: 1.05rem;
+      color: #334155;
+    }
+
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .markdown-body th, .markdown-body td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
+    }
+    .markdown-body th { background: #f1f5f9; }
+
+    .suggestions {
+        margin-top: 15px;
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+    .suggestion-link {
+        color: var(--primary);
+        cursor: pointer;
+        text-decoration: underline;
+        margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>📊 Brazil Economic RAG</h1>
+      <p class="subtitle">Query B3 data and Central Bank indicators in real time.</p>
+    </header>
+
+    <div class="main-card">
+      <div style="text-align: right; margin-bottom: 10px;">
+        <strong>EN</strong> | <a href="/">PT</a>
+      </div>
+
+      <div class="assets-tag">
+        <span class="tag">VALE3</span>
+        <span class="tag">PETR4</span>
+        <span class="tag">ITUB4</span>
+        <span class="tag">IPCA</span>
+        <span class="tag">SELIC</span>
+        <span class="tag">EXCHANGE</span>
+      </div>
+
+      <label for="question">What would you like to analyze?</label>
+      <textarea id="question" placeholder="Ex: What was Vale's variation in March 2026 compared to IPCA?"></textarea>
+      
+      <div class="suggestions">
+        Suggestions: 
+        <span class="suggestion-link" onclick="fill('How did PETR4 close yesterday?')">PETR4 yesterday</span>
+        <span class="suggestion-link" onclick="fill('Inflation (IPCA) summary for the last 4 months')">Inflation Summary</span>
+        <span class="suggestion-link" onclick="fill('Comparison between VALE3 vs ITUB4 in 2026')">VALE vs ITUB</span>
+      </div>
+
+      <div class="actions">
+        <div id="loader-text" style="color: #64748b; font-size: 0.9rem;"></div>
+        <button id="ask-button">
+          <span>Ask Analyst</span>
+        </button>
+      </div>
+
+      <div id="status" class="status-bar"></div>
+
+      <div id="answer-container" style="display: none;">
+        <label>Expert Analysis:</label>
+        <div id="answer" class="markdown-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const askButton = document.getElementById("ask-button");
+    const questionInput = document.getElementById("question");
+    const statusBox = document.getElementById("status");
+    const answerBox = document.getElementById("answer");
+    const answerContainer = document.getElementById("answer-container");
+
+    function fill(text) {
+        questionInput.value = text;
+        questionInput.focus();
+    }
+
+    askButton.addEventListener("click", async () => {
+      const question = questionInput.value.trim();
+      if (!question) {
+        showStatus("Please enter a question.", "error");
+        return;
+      }
+
+      showStatus("Analyzing data and checking history...", "loading");
+      askButton.disabled = true;
+      answerContainer.style.display = "none";
+
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, lang: "en" })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.detail || "API Error.");
+
+        showStatus(`Success! Specialist agent in <strong>${data.agent || 'Economics'}</strong> responded.`, "success");
+        
+        answerContainer.style.display = "block";
+        answerBox.innerHTML = marked.parse(data.answer || "No detailed response provided.");
+
+      } catch (error) {
+        showStatus(error.message, "error");
+      } finally {
+        askButton.disabled = false;
+      }
+    });
+
+    function showStatus(msg, type) {
+      statusBox.innerHTML = msg;
+      statusBox.className = "status-bar status-" + type;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.git
+.env
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+fine_tuning/output/
+fine_tuning/**/checkpoint-*/
+qdrant_local/
